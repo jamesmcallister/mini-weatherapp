@@ -50,22 +50,28 @@ function append(parent, eleID) {
 function displayMainPic(data, id = 0) {
   //html for displaying reg pic and credits
   const parent = query("photo");
-  const child = createNode("img");
-
   const srctoUse =
     id !== 0
       ? data.photos.filter(photo => photo.id === id)[0].reg
       : data.photos[0].reg;
 
-  child.setAttribute("src", srctoUse);
-  child.setAttribute("alt", data.description);
-  append(parent, child);
+  parent.innerHTML = `<img src=${srctoUse} alt=${data.description}>`;
+
   const creditParent = query("credit-user");
   creditParent.innerHTML = data.photos[0].credit;
 }
+
 function displayWeather(data) {
   const parent = query("conditions");
-  parent.innerHTML = data.description;
+
+  function tempConverter(temps) {
+    const result = Object.values(temps).map(x => Math.round(x - 273.15));
+    return ` ${result[0]}&#8451 min ${result[1]}&#8451 max ${result[2]}&#8451`;
+  }
+  tempConverter(data.temp);
+  parent.innerHTML = `${data.location}: ${data.description} ${tempConverter(
+    data.temp
+  )}`;
 }
 
 function displayThumbnails(data) {
@@ -80,27 +86,44 @@ function displayThumbnails(data) {
     } class='thumbs__link__img' >`;
     append(parent, child);
   });
-  const currentThumbnail = query("thumbs");
 
-  if (currentThumbnail) {
-    currentThumbnail.addEventListener("click", function(event) {
-      event.preventDefault();
-      const mainImg = query("photo");
-      mainImg.firstChild.src = event.path["0"].href;
-    });
-  }
   displayMainPic(data);
 }
 
-function submitRequest() {
+function submitRequest(city) {
+  // reset image
   let ourWeather = {};
-  getWeather("London").then(weather => {
+  getWeather(city).then(weather => {
     ourWeather = { ...ourWeather, ...weather };
-    getPhotos(weather.description).then(photos => {
+    getPhotos(`${city} ${weather.description}`).then(photos => {
       ourWeather = { ...ourWeather, photos };
       displayThumbnails(ourWeather);
       displayWeather(ourWeather);
     });
   });
 }
-submitRequest();
+
+const currentThumbnail = query("thumbs");
+currentThumbnail.addEventListener("click", function(event) {
+  event.preventDefault();
+  const mainImg = query("photo");
+  mainImg.firstChild.src = event.path["0"].href;
+});
+
+const searchButtonEle = query("search");
+
+searchButtonEle.addEventListener("submit", event => {
+  event.preventDefault();
+  submitRequest(event.target["0"].value || "London");
+});
+
+// if ("geolocation" in navigator) {
+//   let watchID = navigator.geolocation.watchPosition(function(position) {
+//     console.log(position);
+//     console.log(position.coords.latitude, position.coords.longitude);
+//     submitRequest(position.coords.latitude, position.coords.longitude);
+//   });
+//   console.log(watchID);
+// } else {
+//   /* geolocation IS NOT available */
+// }
