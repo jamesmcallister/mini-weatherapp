@@ -18,11 +18,13 @@ function getWeather(city) {
 }
 function sanitizeUnsplash(photo) {
   // Returns object containing relevant photo data
+
   return {
     id: photo.id,
     thumb: photo.urls.thumb,
     reg: photo.urls.regular,
-    credit: photo.user.name
+    credit: photo.user.name,
+    colour: photo.color
   };
 }
 function getPhotos(weatherDesc) {
@@ -50,12 +52,11 @@ function append(parent, eleID) {
 function displayMainPic(data, id = 0) {
   //html for displaying reg pic and credits
   const parent = query("photo");
-  const srctoUse =
-    id !== 0
-      ? data.photos.filter(photo => photo.id === id)[0].reg
-      : data.photos[0].reg;
 
-  parent.innerHTML = `<img src=${srctoUse} alt=${data.description}>`;
+  const srctoUse =
+    id !== 0 ? data.photos.filter(photo => photo.id === id)[0] : data.photos[0];
+
+  parent.innerHTML = `<img src=${srctoUse.reg} alt=${data.description}>`;
 
   const creditParent = query("credit-user");
   creditParent.innerHTML = data.photos[0].credit;
@@ -83,7 +84,7 @@ function displayThumbnails(data) {
     child.setAttribute("class", "thumbs__link");
     child.innerHTML = `<img src=${img.thumb} alt=${
       img.description
-    } class='thumbs__link__img' >`;
+    } class='thumbs__link__img' data-color=${img.colour}>`;
     append(parent, child);
   });
 
@@ -108,6 +109,8 @@ currentThumbnail.addEventListener("click", function(event) {
   event.preventDefault();
   const mainImg = query("photo");
   mainImg.firstChild.src = event.path["0"].href;
+  const body = document.querySelector("body");
+  body.style.backgroundColor = event.path["0"].firstChild.dataset.color;
 });
 
 const searchButtonEle = query("search");
